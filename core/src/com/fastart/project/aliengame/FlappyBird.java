@@ -16,6 +16,7 @@ public class FlappyBird extends ApplicationAdapter {
 
     SpriteBatch batch;
     Texture background;
+    boolean showAd = true;
 
     // in order to get the bird flapping we need to put the birds images (Texture) in an array
 
@@ -26,11 +27,14 @@ public class FlappyBird extends ApplicationAdapter {
     int gameState = 0;
      Texture toptube;
      Texture bottomtube;
-     int score;
+    // Texture[] toptube;
+    // Texture[] bottomtube;
+    int score;
      int scoringTube = 0;
      BitmapFont scoreFont;
+    BitmapFont gameOverFont;
      Texture gameOver;
-     float gap = 350;
+    float gap = 250;
 
      // max off set of the tubes from the centre up and down
      float maxTubeOffset ;
@@ -59,6 +63,10 @@ public class FlappyBird extends ApplicationAdapter {
         scoreFont.setColor(Color.WHITE);
         scoreFont.getData().setScale(5);
 
+        gameOverFont = new BitmapFont();
+        gameOverFont.setColor(Color.RED);
+        gameOverFont.getData().setScale(5);
+
         gameOver= new Texture("gameover.png");
 
         birdCircle = new Circle();
@@ -75,6 +83,18 @@ public class FlappyBird extends ApplicationAdapter {
         toptube = new Texture("toptube.png");
         bottomtube = new Texture("bottomtube.png");
 
+        // toptube = new Texture[4];
+        // toptube[0] = new Texture("");
+        // toptube[1] = new Texture("");
+        // toptube[2] = new Texture("");
+        // toptube[3] = new Texture("");
+        //
+        // bottomtube = new Texture[4];
+        // bottomtube[0] = new Texture("");
+        // bottomtube[1] = new Texture("");
+        // bottomtube[2] = new Texture("");
+        // bottomtube[3] = new Texture("");
+
         maxTubeOffset = Gdx.graphics.getHeight()/2 - gap / 2 - 100;
         randomGenerator = new Random();
         distanceBetweenTubes = Gdx.graphics.getWidth() * 3/4;
@@ -88,6 +108,7 @@ public class FlappyBird extends ApplicationAdapter {
 
            for (int i = 0; i< numberOfTubes ;i++){
                tubeOffset[i] = (randomGenerator.nextFloat() - 0.5f) * (Gdx.graphics.getHeight() - gap - 200);
+               // tubeX[i]= Gdx.graphics.getWidth()/2 - toptube.getWidth()/2 + Gdx.graphics.getWidth() + i * distanceBetweenTubes;
                tubeX[i]= Gdx.graphics.getWidth()/2 - toptube.getWidth()/2 + Gdx.graphics.getWidth() + i * distanceBetweenTubes;
                toptubeRectangles[i] = new Rectangle();
                bottomtubeRectangles[i] = new Rectangle();
@@ -118,7 +139,7 @@ public class FlappyBird extends ApplicationAdapter {
 
             if (Gdx.input.justTouched()) {
 
-                velocity = -20;
+                velocity = -15;
                 // it creates a random no. between 0 & 1
             }
 
@@ -142,8 +163,9 @@ public class FlappyBird extends ApplicationAdapter {
 
 
             // stopping the bird from disappearing from the screen.
+            // keeping the bird between the top and bottom of screen
 
-            if(birdY > 0 ){
+            if (birdY > 0 && birdY < Gdx.graphics.getHeight() - birds[flapState].getHeight()) {
             velocity ++;
             birdY -= velocity;
             }
@@ -164,16 +186,7 @@ public class FlappyBird extends ApplicationAdapter {
         //the option of restarting game.
         else if (gameState == 2){
 
-            adController.showInterstitial();
-            batch.draw(gameOver,Gdx.graphics.getWidth()/2 - gameOver.getWidth()/2 , Gdx.graphics.getHeight()/2 - gameOver.getHeight()/2);
-            if (Gdx.input.justTouched()) {
-                gameState = 0;
-
-                startGame();
-                score = 0;
-                scoringTube = 0;
-                velocity = 0;
-            }
+            restartGame();
         }
 
 
@@ -190,27 +203,51 @@ public class FlappyBird extends ApplicationAdapter {
 
         // positioning flappy to the centre of the screen.
 
-        batch.draw(birds[flapState], Gdx.graphics.getWidth() / 2 - birds[flapState].getWidth() / 2, birdY);
+        batch.draw(birds[flapState], Gdx.graphics.getWidth() / 2, birdY);
         scoreFont.draw(batch , String.valueOf(score) ,Gdx.graphics.getWidth()/2 - 30, Gdx.graphics.getHeight() *3/4);
 
-        batch.end();
+
 
         birdCircle.set(Gdx.graphics.getWidth()/2 - birds[flapState].getWidth() , birdY + birds[flapState].getHeight()/2 , birds[flapState].getWidth()/2);
         //shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         //shapeRenderer.setColor(Color.RED);
         //shapeRenderer.circle(birdCircle.x, birdCircle.y, birdCircle.radius);
-        for (int i = 0; i< numberOfTubes ;i++){
+        for (int i = 0; i < numberOfTubes; i++) {
 
             //shapeRenderer.rect(tubeX[i], Gdx.graphics.getHeight() / 2 + gap / 2 + tubeOffset[i] , toptube.getWidth() , toptube.getHeight());
             //shapeRenderer.rect(tubeX[i], Gdx.graphics.getHeight() / 2 - gap / 2 - bottomtube.getHeight() + tubeOffset[i] , bottomtube.getWidth(), bottomtube.getHeight());
+            if (Intersector.overlaps(birdCircle, toptubeRectangles[i])
+                    || Intersector.overlaps(birdCircle, bottomtubeRectangles[i])) {
 
-            if (Intersector.overlaps(birdCircle , toptubeRectangles[i]) || Intersector.overlaps(birdCircle , bottomtubeRectangles[i])){
+                gameState = 2;
+                if (showAd) {
+                    adController.showInterstitial();
+                }
+                showAd = false;
 
-               gameState =2;
+
             }
         }
+
+        batch.end();
        //  shapeRenderer.end();
 
+    }
+
+    private void restartGame() {
+        //adController.showInterstitial();
+
+        //batch.draw(gameOver,Gdx.graphics.getWidth()/2 - gameOver.getWidth()/2 , Gdx.graphics.getHeight()/2 - gameOver.getHeight()/2);
+        gameOverFont.draw(batch, "Game Over!", Gdx.graphics.getWidth() / 2 - 2 * gameOverFont.getLineHeight(), Gdx.graphics.getHeight() / 2);
+        if (Gdx.input.justTouched()) {
+            gameState = 0;
+
+            startGame();
+            score = 0;
+            scoringTube = 0;
+            velocity = 0;
+            showAd = true;
+        }
     }
 
 }

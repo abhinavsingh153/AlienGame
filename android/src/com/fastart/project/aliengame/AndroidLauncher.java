@@ -64,7 +64,9 @@ public class AndroidLauncher extends AndroidApplication implements AdController{
 
 		//load ad if internet is there
 		if(isNetworkConnected()) {
-			AdRequest adRequest = new AdRequest.Builder().build();
+			AdRequest adRequest = new AdRequest.Builder()
+					.build();
+			//.addTestDevice("0EDFEBE05AD680040F805030CB31C7E6")
 			interstitialAd.loadAd(adRequest);
 		}
 	}
